@@ -140,6 +140,16 @@ export function Footer() {
                 </div>
               ))}
 
+              {/* Email */}
+              <div className="border-t border-white/10 pt-4">
+                <a
+                  href="mailto:info@tourlink.africa"
+                  className="text-xs text-white/60 transition-colors duration-200 hover:text-magenta-light"
+                >
+                  info@tourlink.africa
+                </a>
+              </div>
+
               {/* Operating Hours */}
               <div className="border-t border-white/10 pt-4">
                 <p className="text-xs font-semibold text-sand">

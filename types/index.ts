@@ -137,6 +137,7 @@ export interface SiteConfig {
   tagline: string;
   description: string;
   url: string;
+  email: string;
   offices: Office[];
   sisterCompany: {
     name: string;

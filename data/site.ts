@@ -6,6 +6,7 @@ export const siteConfig: SiteConfig = {
   description:
     'Curated safari packages across South Africa, Tanzania, Zimbabwe, Mozambique, and beyond. TourLink connects travellers with vetted local operators for authentic African experiences — from budget overland adventures to ultra-luxury fly-in safaris.',
   url: 'https://tourlink.africa',
+  email: 'info@tourlink.africa',
   offices: [
     {
       city: 'Dar es Salaam',

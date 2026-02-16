@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { siteConfig } from '@/data/site';
 
 const crossBorderRoutes = [
   {
@@ -69,6 +71,48 @@ export function CrossBorderCallout() {
               </span>
             </Link>
           ))}
+        </div>
+
+        {/* VisaPermitLink Sister Company Callout */}
+        <div className="mt-12 rounded-2xl bg-navy p-8 md:p-10">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+            <Link
+              href={siteConfig.sisterCompany.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
+              <Image
+                src="/images/partners/visapermitlink-logo.png"
+                alt="Visa Permit Link"
+                width={120}
+                height={120}
+                className="rounded-xl bg-white p-3 object-contain"
+              />
+            </Link>
+
+            <div className="text-center md:text-left">
+              <h3 className="text-xl md:text-2xl font-serif text-white">
+                Need a Visa? We&apos;ve Got You Covered.
+              </h3>
+              <p className="text-white/80 mt-2 leading-relaxed max-w-2xl">
+                Our sister company <strong className="text-gold">{siteConfig.sisterCompany.name}</strong> handles
+                visa and permit applications for all Southern and East Africa destinations. From single-entry
+                tourist visas to the KAZA Univisa, they ensure a smooth entry to every country on your itinerary.
+              </p>
+              <Link
+                href={siteConfig.sisterCompany.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 rounded-full bg-magenta text-white text-sm font-semibold hover:bg-magenta-dark transition-colors duration-200"
+              >
+                Visit {siteConfig.sisterCompany.name}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+              </Link>
+            </div>
+          </div>
         </div>
       </Container>
     </section>

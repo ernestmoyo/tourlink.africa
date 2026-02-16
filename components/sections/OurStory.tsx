@@ -1,12 +1,14 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { siteConfig } from '@/data/site';
 
 const approachPillars = [
   {
     title: 'Cross-Border Logistics Expertise',
     description:
-      'We navigate the visa requirements, border crossings, and transfer logistics that make multi-country itineraries seamless. From the KAZA Univisa to inter-country charter flights, we handle the complexity so you can focus on the experience.',
+      'We navigate the visa requirements, border crossings, and transfer logistics that make multi-country itineraries seamless. From the KAZA Univisa to inter-country charter flights, we handle the complexity so you can focus on the experience. Our sister company Visa Permit Link handles all visa and permit applications across Southern and East Africa.',
     icon: (
       <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
@@ -77,8 +79,8 @@ export function OurStory() {
             </p>
 
             <p>
-              Our founding team spent years on the ground in Tanzania, Zimbabwe, South Africa, and
-              Mozambique, building relationships with the guides, lodge owners, and community leaders
+              Our founding team spent years on the ground in Tanzania, Zimbabwe, South Africa,
+              Mozambique, Namibia, and Botswana, building relationships with the guides, lodge owners, and community leaders
               who form the backbone of African tourism. We saw first-hand how fragmented the booking
               experience was — different operators for each country, inconsistent quality standards,
               and a lack of coordination that turned what should be a seamless journey into a
@@ -124,6 +126,31 @@ export function OurStory() {
                 <p className="text-slate mt-3 leading-relaxed text-sm">
                   {pillar.description}
                 </p>
+
+                {/* VisaPermitLink callout inside Cross-Border card */}
+                {pillar.title === 'Cross-Border Logistics Expertise' && (
+                  <Link
+                    href={siteConfig.sisterCompany.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 mt-5 p-3 rounded-xl bg-sand hover:bg-savanna transition-colors duration-200 group/vpl"
+                  >
+                    <Image
+                      src="/images/partners/visapermitlink-logo.png"
+                      alt="Visa Permit Link"
+                      width={48}
+                      height={48}
+                      className="rounded-lg object-contain"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-charcoal">Visa Permit Link</p>
+                      <p className="text-xs text-slate">Our sister company for visas &amp; permits</p>
+                    </div>
+                    <svg className="w-4 h-4 text-magenta shrink-0 group-hover/vpl:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                  </Link>
+                )}
               </div>
             ))}
           </div>

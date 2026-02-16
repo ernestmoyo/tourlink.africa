@@ -26,11 +26,11 @@ For TourLink clients the value proposition is clear: South Africa can stand alon
       'Yellow fever certificate required if arriving from endemic country',
       '15% VAT applicable on tourism services',
     ],
-    heroImage: '/images/heroes/safari-sunset.jpg',
+    heroImage: '/images/destinations/south-africa/table-mountain.jpg',
     galleryImages: [
-      '/images/heroes/safari-sunset.jpg',
+      '/images/destinations/south-africa/table-mountain.jpg',
+      '/images/destinations/south-africa/kruger-safari.jpg',
       '/images/packages/big-five-luxury.jpg',
-      '/images/packages/jeep-safari.webp',
     ],
   },
 
@@ -106,11 +106,10 @@ For TourLink's multi-country circuits, Zimbabwe sits at a natural crossroads. Vi
       '15.5% VAT on tourism services from 2026',
       'USD widely accepted alongside local currency',
     ],
-    heroImage: '/images/packages/migration-river.jpg',
+    heroImage: '/images/destinations/zimbabwe/victoria-falls.jpg',
     galleryImages: [
-      '/images/packages/migration-river.jpg',
-      '/images/packages/wildlife-park.jpg',
-      '/images/packages/safari-tanzania.webp',
+      '/images/destinations/zimbabwe/victoria-falls.jpg',
+      '/images/destinations/zimbabwe/hwange-elephants.jpg',
     ],
   },
 
@@ -142,11 +141,11 @@ TourLink works with Destination Africa, a Mozambique-based specialist, to handle
       'Yellow fever certificate required if arriving from endemic country',
       'Marine park fees collected by lodges on behalf of ANAC',
     ],
-    heroImage: '/images/destinations/fanjove-island.jpg',
+    heroImage: '/images/destinations/mozambique/bazaruto-beach.jpg',
     galleryImages: [
-      '/images/destinations/fanjove-island.jpg',
+      '/images/destinations/mozambique/bazaruto-beach.jpg',
+      '/images/destinations/mozambique/dhow-sailing.jpg',
       '/images/packages/honeymoon-couple.jpg',
-      '/images/packages/zanzibar-boat.webp',
     ],
   },
 
@@ -177,10 +176,10 @@ For TourLink itineraries, Namibia pairs beautifully with Botswana via the Capriv
       'Self-drive friendly — international driving licence accepted',
       'Community conservancy fees vary by region',
     ],
-    heroImage: '/images/heroes/balloon-safari.jpg',
+    heroImage: '/images/destinations/namibia/sossusvlei-dunes.jpg',
     galleryImages: [
-      '/images/heroes/balloon-safari.jpg',
-      '/images/packages/jeep-safari.webp',
+      '/images/destinations/namibia/sossusvlei-dunes.jpg',
+      '/images/destinations/namibia/etosha-waterhole.jpg',
     ],
   },
 
@@ -210,11 +209,10 @@ Botswana's premium positioning means prices are higher than neighbouring countri
       'Single-use plastic bags banned — bring reusable bags',
       'High-value, low-volume tourism policy — limited camp beds',
     ],
-    heroImage: '/images/packages/wildlife-park.jpg',
+    heroImage: '/images/destinations/botswana/okavango-delta.jpg',
     galleryImages: [
-      '/images/packages/wildlife-park.jpg',
-      '/images/packages/jeep-safari.webp',
-      '/images/heroes/safari-sunset.jpg',
+      '/images/destinations/botswana/okavango-delta.jpg',
+      '/images/destinations/botswana/chobe-elephants.jpg',
     ],
   },
 
@@ -281,11 +279,10 @@ Victoria Falls from the Zambia side offers a dramatically different perspective 
       'e-Visa available for most nationalities',
       'Yellow fever certificate required if arriving from endemic country',
     ],
-    heroImage: '/images/packages/safari-tanzania.webp',
+    heroImage: '/images/destinations/zambia/victoria-falls-zambia.jpg',
     galleryImages: [
-      '/images/packages/safari-tanzania.webp',
-      '/images/packages/migration-river.jpg',
-      '/images/packages/wildlife-park.jpg',
+      '/images/destinations/zambia/victoria-falls-zambia.jpg',
+      '/images/destinations/zambia/walking-safari.jpg',
     ],
   },
 ];

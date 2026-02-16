@@ -1,0 +1,9 @@
+export { HeroSection } from './HeroSection';
+export { TrustBar } from './TrustBar';
+export { DestinationShowcase } from './DestinationShowcase';
+export { FeaturedPackages } from './FeaturedPackages';
+export { WhyTourLink } from './WhyTourLink';
+export { LuxurySpotlight } from './LuxurySpotlight';
+export { TestimonialsSection } from './TestimonialsSection';
+export { TrendsSection } from './TrendsSection';
+export { NewsletterCTA } from './NewsletterCTA';

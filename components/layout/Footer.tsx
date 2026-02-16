@@ -137,6 +137,14 @@ export function Footer() {
                       {phone}
                     </a>
                   ))}
+                  {office.label === 'HQ' && (
+                    <a
+                      href="mailto:info@tourlink.africa"
+                      className="mt-0.5 block text-xs text-white/60 transition-colors duration-200 hover:text-magenta-light"
+                    >
+                      info@tourlink.africa
+                    </a>
+                  )}
                 </div>
               ))}
 
@@ -144,7 +152,7 @@ export function Footer() {
               <div className="border-t border-white/10 pt-4">
                 <a
                   href="mailto:info@tourlink.africa"
-                  className="text-xs text-white/60 transition-colors duration-200 hover:text-magenta-light"
+                  className="text-xs text-magenta-light transition-colors duration-200 hover:text-white"
                 >
                   info@tourlink.africa
                 </a>

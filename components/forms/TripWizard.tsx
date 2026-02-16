@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, submitToFormspree } from '@/lib/utils';
 import {
   DESTINATION_NAMES,
   EXPERIENCE_TYPE_LABELS,
@@ -974,12 +974,15 @@ export function TripWizard() {
     setErrors({});
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!validateStep()) return;
-    // In a real app you'd POST to an API here
+    const formId = process.env.NEXT_PUBLIC_FORMSPREE_TRIP_ID;
+    if (formId) {
+      await submitToFormspree(formId, { ...formData, _subject: `TourLink Trip Planner: ${formData.name}` });
+    }
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [validateStep]);
+  }, [validateStep, formData]);
 
   /* ── Submitted state ──────────────────────────────────────── */
   if (submitted) {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { contactFormSchema, type ContactFormData } from '@/lib/schemas';
-import { cn } from '@/lib/utils';
+import { cn, submitToFormspree } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 
 const tripInterestOptions = [
@@ -25,6 +25,7 @@ const preferredContactOptions = [
 
 export function ContactForm() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const {
     register,
@@ -36,11 +37,19 @@ export function ContactForm() {
   });
 
   async function onSubmit(data: ContactFormData) {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Contact form submission:', data);
-    setIsSuccess(true);
-    reset();
+    setSubmitError('');
+    const formId = process.env.NEXT_PUBLIC_FORMSPREE_CONTACT_ID;
+    if (!formId) {
+      setSubmitError('Form not configured. Please contact us directly at info@tourlink.africa');
+      return;
+    }
+    const result = await submitToFormspree(formId, { ...data, _subject: `TourLink Contact: ${data.tripInterest}` });
+    if (result.ok) {
+      setIsSuccess(true);
+      reset();
+    } else {
+      setSubmitError(result.error ?? 'Something went wrong.');
+    }
   }
 
   if (isSuccess) {
@@ -211,6 +220,11 @@ export function ContactForm() {
           <p className="mt-1 text-sm text-error">{errors.preferredContact.message}</p>
         )}
       </fieldset>
+
+      {/* Error */}
+      {submitError && (
+        <p className="text-sm text-error bg-error/10 rounded-lg p-3">{submitError}</p>
+      )}
 
       {/* Submit */}
       <Button

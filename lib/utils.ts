@@ -25,3 +25,23 @@ export function slugify(text: string): string {
 export function formatPhoneForWhatsApp(phone: string): string {
   return phone.replace(/[^0-9+]/g, '').replace('+', '');
 }
+
+export async function submitToFormspree(
+  formId: string,
+  data: Record<string, unknown>
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`https://formspree.io/f/${formId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) return { ok: true };
+
+    const json = await res.json().catch(() => null);
+    return { ok: false, error: json?.errors?.[0]?.message ?? 'Submission failed. Please try again.' };
+  } catch {
+    return { ok: false, error: 'Network error. Please check your connection and try again.' };
+  }
+}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 import { Container } from '@/components/ui';
+import { submitToFormspree } from '@/lib/utils';
 
 const emailSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -12,8 +13,9 @@ export function NewsletterCTA() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
 
@@ -23,7 +25,16 @@ export function NewsletterCTA() {
       return;
     }
 
-    // In a real app, this would call an API endpoint
+    const formId = process.env.NEXT_PUBLIC_FORMSPREE_NEWSLETTER_ID;
+    if (formId) {
+      setLoading(true);
+      const res = await submitToFormspree(formId, { email, _subject: 'TourLink Newsletter Signup' });
+      setLoading(false);
+      if (!res.ok) {
+        setError(res.error ?? 'Subscription failed. Please try again.');
+        return;
+      }
+    }
     setSubmitted(true);
   }
 
@@ -83,9 +94,10 @@ export function NewsletterCTA() {
                 </div>
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-lg bg-white text-navy font-semibold hover:bg-white/90 transition-colors cursor-pointer shrink-0"
+                  disabled={loading}
+                  className="px-6 py-3 rounded-lg bg-white text-navy font-semibold hover:bg-white/90 transition-colors cursor-pointer shrink-0 disabled:opacity-70"
                 >
-                  Subscribe
+                  {loading ? 'Subscribing...' : 'Subscribe'}
                 </button>
               </div>
               {error && (

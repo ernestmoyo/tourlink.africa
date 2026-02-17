@@ -899,6 +899,8 @@ export function TripWizard() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [direction, setDirection] = useState<'next' | 'back'>('next');
 
   /* ── Field updater ────────────────────────────────────────── */
@@ -976,10 +978,30 @@ export function TripWizard() {
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep()) return;
+    setSubmitError('');
+    setSubmitting(true);
+
     const formId = process.env.NEXT_PUBLIC_FORMSPREE_TRIP_ID;
-    if (formId) {
-      await submitToFormspree(formId, { ...formData, _subject: `TourLink Trip Planner: ${formData.name}` });
+    if (!formId) {
+      setSubmitError('Form not configured. Please contact us directly at info@tourlink.africa');
+      setSubmitting(false);
+      return;
     }
+
+    const result = await submitToFormspree(formId, {
+      ...formData,
+      destinations: formData.destinations.join(', '),
+      preferredMonth: formData.preferredMonth ? MONTHS[formData.preferredMonth - 1] : 'Flexible',
+      _subject: `TourLink Trip Planner: ${formData.name}`,
+    });
+
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.error ?? 'Submission failed. Please try again.');
+      return;
+    }
+
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [validateStep, formData]);
@@ -1083,6 +1105,11 @@ export function TripWizard() {
         <p className="mt-4 text-sm text-red-500 font-medium">{stepError}</p>
       )}
 
+      {/* Submit error */}
+      {submitError && (
+        <p className="mt-4 text-sm text-red-500 bg-red-50 rounded-lg p-3 font-medium">{submitError}</p>
+      )}
+
       {/* Navigation buttons */}
       <div className="flex items-center justify-between mt-8 pt-6 border-t border-sand">
         {currentStep > 0 ? (
@@ -1106,8 +1133,8 @@ export function TripWizard() {
         )}
 
         {isLastStep ? (
-          <Button variant="primary" size="lg" onClick={handleSubmit}>
-            Submit My Trip Request
+          <Button variant="primary" size="lg" onClick={handleSubmit} loading={submitting}>
+            {submitting ? 'Submitting...' : 'Submit My Trip Request'}
             <svg
               className="h-5 w-5"
               viewBox="0 0 24 24"

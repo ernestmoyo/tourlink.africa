@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { OurStory } from '@/components/sections/OurStory';
-import { PartnerNetwork } from '@/components/sections/PartnerNetwork';
 
 export const metadata: Metadata = {
   title: 'About TourLink',
@@ -9,10 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
-  return (
-    <>
-      <OurStory />
-      <PartnerNetwork />
-    </>
-  );
+  return <OurStory />;
 }

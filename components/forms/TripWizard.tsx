@@ -9,6 +9,7 @@ import {
   MONTHS,
 } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
+import { captureWebEnquiry } from '@/app/actions/capture';
 import { TripRecommendations } from '@/components/forms/TripRecommendations';
 import type { Destination, ExperienceType, TierLevel } from '@/types';
 
@@ -981,27 +982,44 @@ export function TripWizard() {
     setSubmitError('');
     setSubmitting(true);
 
-    const formId = process.env.NEXT_PUBLIC_FORMSPREE_TRIP_ID;
-    if (!formId) {
-      setSubmitError('Form not configured. Please contact us directly at info@tourlink.africa');
-      setSubmitting(false);
-      return;
-    }
+    const monthLabel = formData.preferredMonth ? MONTHS[formData.preferredMonth - 1] : 'Flexible';
+    const tiers = TIER_CONFIG as Record<string, { label: string }>;
+    const destNames = DESTINATION_NAMES as Record<string, string>;
+    const expLabels = EXPERIENCE_TYPE_LABELS as Record<string, string>;
+    const budgetLabel = tiers[formData.budgetTier]?.label ?? formData.budgetTier;
+    const experience = expLabels[formData.experienceType] ?? formData.experienceType;
 
-    const result = await submitToFormspree(formId, {
-      ...formData,
-      destinations: formData.destinations.join(', '),
-      preferredMonth: formData.preferredMonth ? MONTHS[formData.preferredMonth - 1] : 'Flexible',
-      _subject: `TourLink Trip Planner: ${formData.name}`,
-    });
+    // Capture into the TourLink CRM (best-effort, never blocks the traveller).
+    captureWebEnquiry({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      interest: budgetLabel || 'trip planner',
+      destinations: formData.destinations.map((d) => destNames[d] ?? d),
+      message: [
+        `Trip planner — ${experience || 'any experience'}.`,
+        `Budget: ${budgetLabel || 'flexible'}. Duration: ${formData.duration}. Group: ${formData.groupType}. Month: ${monthLabel}.`,
+        formData.message ? `Notes: ${formData.message}` : '',
+      ].filter(Boolean).join(' '),
+      source: 'website',
+    }).catch(() => {});
+
+    const formId = process.env.NEXT_PUBLIC_FORMSPREE_TRIP_ID;
+    if (formId) {
+      const result = await submitToFormspree(formId, {
+        ...formData,
+        destinations: formData.destinations.join(', '),
+        preferredMonth: monthLabel,
+        _subject: `TourLink Trip Planner: ${formData.name}`,
+      });
+      if (!result.ok) {
+        setSubmitting(false);
+        setSubmitError(result.error ?? 'Submission failed. Please try again.');
+        return;
+      }
+    }
 
     setSubmitting(false);
-
-    if (!result.ok) {
-      setSubmitError(result.error ?? 'Submission failed. Please try again.');
-      return;
-    }
-
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [validateStep, formData]);

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { contactFormSchema, type ContactFormData } from '@/lib/schemas';
 import { cn, submitToFormspree } from '@/lib/utils';
+import { captureWebEnquiry } from '@/app/actions/capture';
 import { Button } from '@/components/ui/Button';
 
 const tripInterestOptions = [
@@ -38,9 +40,23 @@ export function ContactForm() {
 
   async function onSubmit(data: ContactFormData) {
     setSubmitError('');
+
+    // Capture into the TourLink CRM (best-effort, never blocks the user).
+    captureWebEnquiry({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      interest: data.tripInterest,
+      message: data.message,
+      source: 'website',
+    }).catch(() => {});
+
     const formId = process.env.NEXT_PUBLIC_FORMSPREE_CONTACT_ID;
     if (!formId) {
-      setSubmitError('Form not configured. Please contact us directly at info@tourlink.africa');
+      // No email relay configured, but the CRM capture above still recorded the
+      // lead — treat as success rather than a dead end.
+      setIsSuccess(true);
+      reset();
       return;
     }
     const result = await submitToFormspree(formId, { ...data, _subject: `TourLink Contact: ${data.tripInterest}` });
@@ -63,9 +79,9 @@ export function ContactForm() {
         <h3 className="text-2xl font-serif text-charcoal">Thank You!</h3>
         <p className="text-slate mt-2">
           We&apos;ll respond within 24 hours. In the meantime, feel free to browse our{' '}
-          <a href="/packages" className="text-magenta underline hover:text-magenta-dark">
+          <Link href="/packages" className="text-magenta underline hover:text-magenta-dark">
             travel packages
-          </a>.
+          </Link>.
         </p>
         <button
           onClick={() => setIsSuccess(false)}

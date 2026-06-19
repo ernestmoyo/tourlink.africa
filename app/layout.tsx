@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
+import { HideOnOps } from "@/components/layout/HideOnOps";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tourlink.africa"),
@@ -60,12 +61,16 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <Header />
+        <HideOnOps>
+          <Header />
+        </HideOnOps>
         <main id="main-content">{children}</main>
-        <Footer />
-        <ScrollToTop />
-        <WhatsAppButton />
-        <CookieConsent />
+        <HideOnOps>
+          <Footer />
+          <ScrollToTop />
+          <WhatsAppButton />
+          <CookieConsent />
+        </HideOnOps>
       </body>
     </html>
   );

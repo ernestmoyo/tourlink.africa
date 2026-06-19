@@ -1,0 +1,14 @@
+{
+  "name": "tourlink-concierge-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WhatsApp bridge for the TourLink Concierge (Twiga). Links a real number via QR and relays to the app's ingest API.",
+  "scripts": {
+    "start": "node bridge.mjs"
+  },
+  "dependencies": {
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}

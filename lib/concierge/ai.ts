@@ -75,7 +75,8 @@ Rules:
 - NEVER send a quote straight to a client. Use prepare_quote — it builds a PDF and goes to ${APPROVER} for approval first. Only ${APPROVER} can send_quote to the client.
 - Itineraries (generate_itinerary) and vouchers (generate_voucher) are polished PDFs you can send to the client directly — no approval needed.
 - If a document/image is attached (passport, ID, voucher, signed quote), read it, summarise it, and attach it to the right client/trip.
-- Reply in short, WhatsApp-friendly text with light emoji. Under ~6 lines. Never invent data that isn't on the desk. Talk like a warm, sharp teammate.`
+- For current or external facts NOT on the desk — lodge rates, park/visa fees, flights, seasons/weather, competitor offers, news — call web_research and weave the answer in, citing the source link(s) briefly.
+- Reply in short, WhatsApp-friendly text with light emoji. Under ~6 lines (a researched answer can be a little longer). Never invent data that isn't on the desk. Talk like a warm, sharp teammate.`
 
 const AMBIENT_NOTE = `
 
@@ -105,6 +106,7 @@ const TOOLS: Anthropic.Tool[] = [
   { name: 'generate_voucher', description: 'Generate a confirmation voucher PDF (booked services) for a trip and send it to the client (or a given recipient).', input_schema: { type: 'object', properties: { trip_id: { type: 'string' }, recipient: { type: 'string' } }, required: ['trip_id'] } },
   { name: 'email_document', description: `Email a trip document (PDF attached) to the client's email. Use for high-value clients who prefer email. A quote may only be emailed by ${APPROVER} (the approver).`, input_schema: { type: 'object', properties: { trip_id: { type: 'string' }, type: { type: 'string', enum: ['quote', 'itinerary', 'voucher'] }, to: { type: 'string', description: 'recipient email; defaults to the client contact email' } }, required: ['trip_id', 'type'] } },
   { name: 'send_trip_link', description: "Send the client their private 'track my trip' portal link (live itinerary, payments, documents) over WhatsApp.", input_schema: { type: 'object', properties: { trip_id: { type: 'string' }, recipient: { type: 'string', description: 'phone number; defaults to the client contact phone' } }, required: ['trip_id'] } },
+  { name: 'web_research', description: 'Search the live web and read the top results — for current/external info NOT on the desk: lodge details & rates, park/visa fees, flight info, weather/seasons, competitor offers, news, facts. Returns sources you should cite briefly.', input_schema: { type: 'object', properties: { query: { type: 'string', description: 'a natural-language search query' }, max_results: { type: 'number', description: 'how many sources to read (default 3, max 5)' } }, required: ['query'] } },
 ]
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tourlink.africa'
@@ -373,6 +375,30 @@ async function runTool(ctx: Ctx, name: string, input: Record<string, unknown>, s
       if ('error' in r) return `couldn't email the ${type}: ${r.error}`
       await log(ctx, `${type} emailed`, trip.name, `→ ${r.to}`, { trip_id: trip.id, account_id: trip.account_id })
       return `📧 Emailed the ${type} for "${trip.name}" to ${r.to}.`
+    }
+    case 'web_research': {
+      const token = process.env.APIFY_TOKEN
+      if (!token) return 'Web research is not configured (no APIFY_TOKEN).'
+      const max = Math.min(Math.max(1, Number(input.max_results) || 3), 5)
+      try {
+        const res = await fetch(`https://api.apify.com/v2/acts/apify~rag-web-browser/run-sync-get-dataset-items?token=${token}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: String(input.query), maxResults: max, outputFormats: ['markdown'], scrapingTool: 'raw-http' }),
+        })
+        if (!res.ok) return `web research failed (${res.status})`
+        const items = (await res.json()) as Array<Record<string, unknown>>
+        if (!Array.isArray(items) || items.length === 0) return 'No web results found.'
+        const blocks = items.slice(0, max).map((it, i) => {
+          const meta = (it.metadata || {}) as Record<string, string>
+          const sr = (it.searchResult || {}) as Record<string, string>
+          const title = meta.title || sr.title || 'Result'
+          const url = meta.url || sr.url || ''
+          const content = String((it.markdown as string) || (it.text as string) || sr.description || '')
+            .replace(/\n{3,}/g, '\n\n').trim().slice(0, 1800)
+          return `[${i + 1}] ${title}\n${url}\n${content}`
+        }).join('\n\n---\n\n')
+        return `Live web results for "${input.query}" (cite the source URLs in your answer):\n\n${blocks}`
+      } catch (e) { return `web research error: ${(e as Error).message}` }
     }
     default:
       return 'unknown tool'

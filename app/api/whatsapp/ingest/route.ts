@@ -5,6 +5,8 @@ import { loadState } from '@/lib/concierge/state'
 import { runConciergeAI, runClientAI, aiEnabled, type Media } from '@/lib/concierge/ai'
 
 export const dynamic = 'force-dynamic'
+// Allow time for the AI tool loop + live web research (Apify) to complete.
+export const maxDuration = 60
 
 // Shared secret between the WhatsApp bridge and the app. Required unless running
 // locally without one set (dev convenience).

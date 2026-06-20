@@ -24,6 +24,7 @@
 | `SUPABASE_DB_PASSWORD` / `SUPABASE_DB_URL` | Direct Postgres (schema push / seeding) | `.secrets/production.env` |
 | `ANTHROPIC_API_KEY` | Relay AI brain (Claude) — **secret** | `.env.local` · Vercel |
 | `CONCIERGE_WA_SECRET` | Shared secret between the app and the WhatsApp bridge | `.secrets/production.env` · Vercel · bridge `.env` |
+| `APIFY_TOKEN` | Apify — Relay's live web research (RAG Web Browser actor) — **secret** | `.secrets/production.env` · Vercel |
 | `APP_MODE` | `crm` on the `tourrelay` deployment (vs unset = website) | Vercel only |
 | `NEXT_PUBLIC_SITE_URL` | Public base URL for portal links | Vercel |
 

@@ -42,3 +42,9 @@ next-env.d.ts
 
 # generated / runtime
 /public/uploads/
+
+# secrets (never commit)
+.secrets/
+*secret*.txt
+*secrete*.txt
+tourrelay.txt

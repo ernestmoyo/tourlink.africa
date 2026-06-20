@@ -1,0 +1,7 @@
+# Not part of the Next.js app build — keep these out of Vercel deploys.
+# Leading slash = repo root only (so this does NOT match lib/supabase, etc.).
+/ops
+/bin
+/supabase
+/.secrets
+/docs

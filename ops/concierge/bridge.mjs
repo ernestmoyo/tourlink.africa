@@ -9,10 +9,34 @@
 //   or from web/:  npm run concierge
 
 import http from 'node:http'
+import { readFileSync, existsSync } from 'node:fs'
 import pkg from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 
 const { Client, LocalAuth, MessageMedia } = pkg
+
+// Load ./.env (next to this script) so `node bridge.mjs` just works.
+try {
+  for (const line of readFileSync(new URL('./.env', import.meta.url), 'utf8').split('\n')) {
+    const m = line.match(/^\s*([\w.]+)\s*=\s*(.*)\s*$/)
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim()
+  }
+} catch { /* no .env — rely on the environment */ }
+
+// Use a system Chrome/Edge (puppeteer's bundled download is flaky on Windows).
+function findChrome() {
+  const env = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH
+  if (env && existsSync(env)) return env
+  for (const c of [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium',
+  ]) if (existsSync(c)) return c
+  return undefined
+}
+const CHROME_PATH = findChrome()
 
 // ---- config ----
 const APP_URL = process.env.APP_URL || 'http://localhost:3000'
@@ -22,12 +46,26 @@ const QR_PORT = Number(process.env.QR_PORT || 3200)
 const POLL_MS = Number(process.env.OUTBOX_POLL_MS || 5000)
 const GROUP_NAME = process.env.WA_GROUP_NAME || '' // team group to treat as the desk
 const TEAM = process.env.CONCIERGE_TEAM || '' // workspace this number serves: 'TourLink' or 'VisaPermitLink'
-const ADDRESS = ['relay', 'tourrelay', '@relay', '🔗', 'concierge']
-// Phone digits (no +) that are team members → full control. Everyone else 1:1 is a client.
-const TEAM_NUMBERS = new Set((process.env.TEAM_NUMBERS || '').split(',').map((s) => s.replace(/\D/g, '')).filter(Boolean))
-// name → phone digits, for DM targeting from the outbox.
+// Names Relay answers to when addressed in a group (longest first so e.g.
+// "tourrelay" strips before "tour").
+const ADDRESS = ['tourrelay', '@tourrelay', 'relay', '@relay', 'tour', '@tour', '🔗', 'concierge']
+// name → real WhatsApp number, e.g. {"Ernest":"2557...","Isabel":"2557..."}.
+// Drives both sender identity (so Relay knows who's talking) and full control.
 let PEOPLE = {}
 try { PEOPLE = JSON.parse(process.env.TOURLINK_PEOPLE || '{}') } catch { PEOPLE = {} }
+const digitsOf = (s) => String(s || '').replace(/\D/g, '')
+const tail = (s) => digitsOf(s).slice(-9) // match on last 9 digits (ignore country-code/format quirks)
+// All team numbers (from PEOPLE + any extra TEAM_NUMBERS) → full control.
+const TEAM_TAILS = new Set([
+  ...Object.values(PEOPLE).map(tail),
+  ...(process.env.TEAM_NUMBERS || '').split(',').map(tail),
+].filter(Boolean))
+const isTeam = (phone) => TEAM_TAILS.has(tail(phone))
+const nameForNumber = (phone) => {
+  const t = tail(phone)
+  for (const [name, num] of Object.entries(PEOPLE)) if (tail(num) === t) return name
+  return null
+}
 
 const headers = { 'Content-Type': 'application/json', ...(SECRET ? { 'x-concierge-secret': SECRET } : {}) }
 let lastQr = ''
@@ -65,8 +103,10 @@ function stripAddress(body) {
 // ---- client ----
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: CLIENT_ID }),
-  puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+  puppeteer: { headless: true, executablePath: CHROME_PATH, args: ['--no-sandbox', '--disable-setuid-sandbox'] },
 })
+if (CHROME_PATH) console.log(`Using browser: ${CHROME_PATH}`)
+else console.log('⚠️  No system Chrome found — set PUPPETEER_EXECUTABLE_PATH in ops/concierge/.env')
 
 client.on('qr', (qr) => { lastQr = qr; qrcode.generate(qr, { small: true }); console.log(`\nScan the QR above, or open http://localhost:${QR_PORT}\n`) })
 client.on('ready', () => { ready = true; console.log(`✅ TourRelay connected as ${CLIENT_ID}. Listening…`) })
@@ -77,8 +117,10 @@ client.on('message', async (msg) => {
     if (msg.isStatus) return
     const chat = await msg.getChat()
     const contact = await msg.getContact()
-    const name = contact.pushname || contact.name || contact.number || 'WhatsApp'
     const fromPhone = (contact.number || '').replace(/\D/g, '')
+    // Prefer the configured real name (so Relay always knows it's Ernest/Isabel/
+    // Joy/Welly), falling back to the WhatsApp display name.
+    const name = nameForNumber(fromPhone) || contact.pushname || contact.name || contact.number || 'WhatsApp'
     const media = await mediaOf(msg)
 
     let mode = 'team'
@@ -89,7 +131,7 @@ client.on('message', async (msg) => {
       if (addressed) { mode = 'team'; text = stripAddress(msg.body) }
       else { mode = 'ambient' } // listen quietly; server stays silent unless it can help
     } else {
-      mode = TEAM_NUMBERS.has(fromPhone) ? 'team' : 'client'
+      mode = isTeam(fromPhone) ? 'team' : 'client'
     }
 
     const reply = await ingest({ name, body: text, media, mode, fromPhone, team: TEAM || undefined })

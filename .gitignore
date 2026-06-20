@@ -48,3 +48,8 @@ next-env.d.ts
 *secret*.txt
 *secrete*.txt
 tourrelay.txt
+
+# bridge runtime
+node_modules/
+.wwebjs_auth/
+.wwebjs_cache/

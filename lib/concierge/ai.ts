@@ -80,7 +80,11 @@ Rules:
 
 const AMBIENT_NOTE = `
 
-IMPORTANT — this message was NOT addressed to you; you are quietly listening in a group chat. Only jump in if you can genuinely help: a real question, someone stuck about a trip/client/payment, or a clear request you can act on. Be brief and human. Do NOT change anything in ambient mode unless explicitly asked. If the message is casual chat, off-topic, directed at a specific person, or you have nothing useful to add, reply with exactly the single token <silent> and nothing else.`
+YOU ARE LISTENING IN THE TEAM'S WHATSAPP GROUP (this message wasn't addressed to you directly). Your job here is to quietly keep the desk in sync with what the team says.
+- If the message contains anything ACTIONABLE for the desk — a new enquiry/lead, a client detail, an assignment ("Joy, take the ambassador"), a decision, a payment received, a date or booking confirmed, a status change — RECORD it with the right tool (create_enquiry, qualify_account, add_note, set_owner, move_card, set_payment_status, add_payment_plan, create_trip, build_trip_from_package, etc.), then give ONE short line confirming what you logged (e.g. "📝 Logged: new enquiry for Mrs Banda — Zanzibar, 4 pax").
+- If it's a genuine question or research request, answer briefly (use web_research if needed).
+- If it's casual chatter, greetings, off-topic, or has nothing actionable, reply with exactly the single token <silent> and nothing else.
+Be decisive but never noisy: only speak when you've logged something or genuinely helped. When unsure whether something is a real desk action, lean toward logging a note rather than doing nothing.`
 
 // ---- tool definitions ----
 const TOOLS: Anthropic.Tool[] = [

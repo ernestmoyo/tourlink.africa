@@ -70,6 +70,10 @@ const nameForNumber = (phone) => {
 const headers = { 'Content-Type': 'application/json', ...(SECRET ? { 'x-concierge-secret': SECRET } : {}) }
 let lastQr = ''
 let ready = false
+// If PAIR_NUMBER is set, link via an 8-char pairing code instead of a QR scan.
+const PAIR_NUMBER = (process.env.PAIR_NUMBER || '').replace(/\D/g, '')
+let lastPairCode = ''
+let pairingRequested = false
 
 // ---- ingest ----
 async function ingest(payload) {
@@ -103,12 +107,39 @@ function stripAddress(body) {
 // ---- client ----
 const client = new Client({
   authStrategy: new LocalAuth({ clientId: CLIENT_ID }),
-  puppeteer: { headless: true, executablePath: CHROME_PATH, args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+  // Optional version pin via WA_WEB_VERSION; default = whatsapp-web.js's own
+  // tested version (best for completing the device link).
+  ...(process.env.WA_WEB_VERSION ? {
+    webVersionCache: { type: 'remote', remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${process.env.WA_WEB_VERSION}.html` },
+  } : {}),
+  puppeteer: {
+    headless: true,
+    executablePath: CHROME_PATH,
+    protocolTimeout: 0, // don't kill the slow WhatsApp Web inject (avoids Runtime.callFunctionOn timeout)
+    args: [
+      '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+      '--disable-gpu', '--no-first-run', '--disable-extensions', '--disable-background-timer-throttling',
+    ],
+  },
 })
 if (CHROME_PATH) console.log(`Using browser: ${CHROME_PATH}`)
 else console.log('⚠️  No system Chrome found — set PUPPETEER_EXECUTABLE_PATH in ops/concierge/.env')
 
-client.on('qr', (qr) => { lastQr = qr; qrcode.generate(qr, { small: true }); console.log(`\nScan the QR above, or open http://localhost:${QR_PORT}\n`) })
+client.on('qr', async (qr) => {
+  lastQr = qr
+  if (PAIR_NUMBER) {
+    if (!pairingRequested) {
+      pairingRequested = true
+      try {
+        lastPairCode = await client.requestPairingCode(PAIR_NUMBER)
+        console.log(`\n🔑  PAIRING CODE: ${lastPairCode}\n   On the phone for +${PAIR_NUMBER}:\n   WhatsApp → Linked Devices → Link a Device → "Link with phone number instead" → enter this code.\n   (Or open http://localhost:${QR_PORT})\n`)
+      } catch (e) { console.log('pairing code error:', e?.message || e); pairingRequested = false }
+    }
+    return
+  }
+  qrcode.generate(qr, { small: true })
+  console.log(`\nScan the QR above, or open http://localhost:${QR_PORT}\n`)
+})
 client.on('ready', () => { ready = true; console.log(`✅ TourRelay connected as ${CLIENT_ID}. Listening…`) })
 client.on('disconnected', (r) => { ready = false; console.log('⚠️ disconnected:', r) })
 
@@ -117,10 +148,18 @@ client.on('message', async (msg) => {
     if (msg.isStatus) return
     const chat = await msg.getChat()
     const contact = await msg.getContact()
-    const fromPhone = (contact.number || '').replace(/\D/g, '')
-    // Prefer the configured real name (so Relay always knows it's Ernest/Isabel/
-    // Joy/Welly), falling back to the WhatsApp display name.
-    const name = nameForNumber(fromPhone) || contact.pushname || contact.name || contact.number || 'WhatsApp'
+    // WhatsApp's @lid privacy can hide the real number on one field but expose it
+    // on another — gather every identifier and keep the real-phone ones.
+    const ids = [contact.number, contact?.id?._serialized, contact?.id?.user, msg.author, msg.from]
+      .map((x) => String(x || '')).filter(Boolean)
+    const digitsOk = (d) => d.length >= 9 && d.length <= 14 // real phone, not a long @lid
+    const cus = ids.filter((c) => /@c\.us/i.test(c)).map((c) => c.replace(/\D/g, '')).filter(digitsOk)
+    const other = ids.filter((c) => !/@lid|@g\.us/i.test(c)).map((c) => c.replace(/\D/g, '')).filter(digitsOk)
+    const phoneCands = [...new Set([...cus, ...other])] // real (@c.us) numbers first
+    const matchedName = phoneCands.map(nameForNumber).find(Boolean) || null
+    const teamMember = matchedName != null || phoneCands.some(isTeam)
+    const fromPhone = phoneCands[0] || (contact.number || '').replace(/\D/g, '')
+    const name = matchedName || contact.pushname || contact.name || 'WhatsApp'
     const media = await mediaOf(msg)
 
     let mode = 'team'
@@ -131,7 +170,7 @@ client.on('message', async (msg) => {
       if (addressed) { mode = 'team'; text = stripAddress(msg.body) }
       else { mode = 'ambient' } // listen quietly; server stays silent unless it can help
     } else {
-      mode = isTeam(fromPhone) ? 'team' : 'client'
+      mode = teamMember ? 'team' : 'client'
     }
 
     const reply = await ingest({ name, body: text, media, mode, fromPhone, team: TEAM || undefined })
@@ -197,9 +236,13 @@ http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' })
   const body = ready
     ? '<h2>✅ Connected</h2><p>TourRelay is live.</p>'
-    : lastQr
-      ? `<h2>Scan to link</h2><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lastQr)}"/><p>WhatsApp → Linked Devices → Link a Device</p>`
-      : '<h2>Starting…</h2><p>Refresh in a moment.</p>'
+    : (PAIR_NUMBER && lastPairCode)
+      ? `<h2>Link with a code</h2><p style="font-size:42px;letter-spacing:6px;font-weight:700;font-family:monospace">${lastPairCode}</p><p>On +${PAIR_NUMBER}: WhatsApp → Linked Devices → Link a Device → <b>"Link with phone number instead"</b> → enter this code.</p>`
+      : (PAIR_NUMBER)
+        ? '<h2>Generating pairing code…</h2><p>Refresh in a few seconds.</p>'
+        : lastQr
+          ? `<h2>Scan to link</h2><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lastQr)}"/><p>WhatsApp → Linked Devices → Link a Device</p>`
+          : '<h2>Starting…</h2><p>Refresh in a moment.</p>'
   res.end(`<html><body style="font-family:system-ui;text-align:center;padding:40px">${body}</body></html>`)
 }).listen(QR_PORT, () => console.log(`QR / health UI on http://localhost:${QR_PORT}`))
 
